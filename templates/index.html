@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBMA 遗传咨询 AI 对话仿真系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <button id="back-btn" class="header-btn">返回</button>
+            <div id="chapter-name" class="chapter-title">对话模拟</div>
+            <div class="header-placeholder"></div>
+        </header>
+
+        <main class="main-content">
+            <div class="dialogue-history" id="dialogue-history">
+                <!-- 对话内容会动态插入这里 -->
+            </div>
+
+            <div class="options-container" id="options-container">
+                 <div class="system-prompt" id="system-prompt">请选择和李森的对话内容。</div>
+                <!-- 选项会动态插入这里 -->
+            </div>
+
+            <div class="input-container" id="input-container" style="display: none;">
+                <textarea id="custom-input" placeholder="输入您想对咨询者说的话..."></textarea>
+                <button id="send-btn">发送</button>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
