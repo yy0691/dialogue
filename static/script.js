@@ -3,30 +3,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const optionsContainer = document.getElementById('options-container');
     const systemPrompt = document.getElementById('system-prompt');
     const chapterName = document.getElementById('chapter-name');
+    const navItems = document.querySelectorAll('.nav-item');
 
     let currentNodeInfo = null;
 
     function addMessage(speaker, text) {
         const messageWrapper = document.createElement('div');
+        messageWrapper.classList.add('message-wrapper');
+        
         const speakerLabel = document.createElement('div');
-        const messageBubble = document.createElement('div');
-
         speakerLabel.textContent = speaker;
         speakerLabel.className = 'speaker-label';
 
+        const messageBubble = document.createElement('div');
         messageBubble.textContent = text;
         messageBubble.classList.add('message-bubble');
 
-        if (speaker === '咨询师') {
-            messageBubble.classList.add('counselor');
-            messageWrapper.style.display = 'flex';
-            messageWrapper.style.flexDirection = 'column';
-            messageWrapper.style.alignItems = 'flex-start';
-        } else {
+        // Correct alignment: AI (咨询者) on the left, User (咨询师) on the right.
+        if (speaker === '咨询者') {
+            messageWrapper.classList.add('client');
             messageBubble.classList.add('client');
-            messageWrapper.style.display = 'flex';
-            messageWrapper.style.flexDirection = 'column';
-            messageWrapper.style.alignItems = 'flex-end';
+        } else {
+            messageWrapper.classList.add('counselor');
+            messageBubble.classList.add('counselor');
         }
         
         messageWrapper.appendChild(speakerLabel);
@@ -66,13 +65,12 @@ document.addEventListener('DOMContentLoaded', () => {
             optionsContainer.appendChild(button);
         });
 
-        // Add custom input option
         const customInputButton = document.createElement('button');
-        customInputButton.className = 'option-btn custom-question-btn'; // Added a specific class
+        customInputButton.className = 'option-btn custom-question-btn';
         const icon = document.createElement('span');
         icon.className = 'icon';
         const text = document.createElement('span');
-        text.textContent = '我想问一个额外问题...'; // Changed text for clarity
+        text.textContent = '我想问一个额外问题...';
         customInputButton.appendChild(icon);
         customInputButton.appendChild(text);
         customInputButton.onclick = handleCustomQuestion;
@@ -80,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleCustomQuestion() {
-        optionsContainer.innerHTML = ''; // Clear options
+        optionsContainer.innerHTML = '';
         optionsContainer.appendChild(systemPrompt);
 
         const container = document.createElement('div');
@@ -136,10 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Add AI's custom response to history
             addMessage(data.speaker, data.dialogue);
-
-            // Restore the original options
             displayOptions(data.options_to_restore);
 
         } catch (error) {
@@ -160,9 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await response.json();
         
         currentNodeInfo = data.node_info;
-        chapterName.textContent = currentNodeInfo.goal || '对话模拟';
+        updateUIState();
         
-        // Now, trigger AI client's response
         generateClientResponse();
     }
 
@@ -181,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         addMessage('咨询者', data.dialogue);
         currentNodeInfo = data.node_info;
-        chapterName.textContent = currentNodeInfo.goal || '对话模拟';
+        updateUIState();
 
         if (currentNodeInfo.id.toUpperCase() === 'END') {
             optionsContainer.innerHTML = '<div class="system-prompt">对话已结束。</div>';
@@ -190,18 +184,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function start() {
+    async function start(nodeId = 'M1-01') {
+        dialogueHistory.innerHTML = ''; // Clear history for new session
         showLoading(true);
-        const response = await fetch('/start', { method: 'POST' });
+        const response = await fetch('/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ node_id: nodeId })
+        });
         const data = await response.json();
 
         addMessage(data.speaker, data.dialogue);
         currentNodeInfo = data.node_info;
-        chapterName.textContent = currentNodeInfo.goal || '对话模拟';
+        updateUIState();
         
-        // Immediately generate the first client response
         generateClientResponse();
     }
 
+    function updateUIState() {
+        if (!currentNodeInfo) return;
+
+        // Update header title
+        chapterName.textContent = currentNodeInfo.goal || '对话模拟';
+
+        // Update active nav item
+        const majorNode = currentNodeInfo.id.split('-')[0];
+        navItems.forEach(item => {
+            const itemNode = item.dataset.node.split('-')[0];
+            if (itemNode === majorNode) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    }
+
+    // Add event listeners to nav items
+    navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const nodeId = e.currentTarget.dataset.node;
+            start(nodeId);
+        });
+    });
+
+    // Initial start
     start();
 });

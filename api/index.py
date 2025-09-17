@@ -120,16 +120,20 @@ def index():
 
 @app.route('/start', methods=['POST'])
 def start_dialogue():
-    """开始对话，返回第一个节点的信息"""
+    """开始或跳转对话，返回指定或默认节点的信息"""
     global current_node_id, last_counselor_message
+    
+    data = request.json or {}
+    start_node_id = data.get('node_id', 'M1-01')
+
     load_dialogue_data()
-    current_node_id = "M1-01"
+    current_node_id = start_node_id
     node = dialogue_data.get(current_node_id)
     
     if not node:
-        return jsonify({"error": "Start node M1-01 not found."}),
+        return jsonify({"error": f"Start node {start_node_id} not found."}), 500
 
-    # 第一个节点是咨询师，直接给出开场白和选项
+    # 节点直接是咨询师的开场白
     last_counselor_message = node.get('examples', ["你好，请坐。需要什么帮助吗？"])[0]
     
     # 移动到下一个节点，让AI扮演咨询者
