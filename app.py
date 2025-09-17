@@ -3,6 +3,7 @@ import json
 import os
 import google.generativeai as genai
 import textwrap
+from config import get_google_api_key
 
 app = Flask(__name__)
 
@@ -22,12 +23,11 @@ def load_dialogue_data(filename="dialogue_output.json"):
 
 def get_api_key():
     """从环境变量中获取Google API密钥。"""
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        print("错误: 环境变量 GOOGLE_API_KEY 未设置。")
-        # 在Web应用中，我们不应该直接exit()，而是返回错误信息
+    try:
+        return get_google_api_key()
+    except ValueError as e:
+        print(f"错误: {e}")
         raise ValueError("API Key not set")
-    return api_key
 
 def initialize_ai():
     """初始化AI模型"""
@@ -249,4 +249,8 @@ def ask_client_custom_question():
 
 if __name__ == '__main__':
     load_dialogue_data()
-    app.run(debug=True, port=5001)
+    # 获取端口号，支持环境变量设置
+    port = int(os.environ.get('PORT', 5001))
+    # 在生产环境中关闭debug模式
+    debug = os.environ.get('FLASK_ENV') == 'development'
+    app.run(debug=debug, host='0.0.0.0', port=port)
