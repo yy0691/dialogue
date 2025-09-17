@@ -12,7 +12,7 @@ def hello():
 @app.route('/test')
 def test():
     return jsonify({
-        "message": "Test endpoint working", 
+        "message": "Test endpoint working",
         "status": "success"
     })
 
