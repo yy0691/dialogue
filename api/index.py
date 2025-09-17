@@ -3,7 +3,6 @@ import json
 import os
 import google.generativeai as genai
 import textwrap
-from config import get_google_api_key
 
 app = Flask(__name__)
 
@@ -22,12 +21,18 @@ def load_dialogue_data(filename="dialogue_output.json"):
         print(f"错误: 加载对话文件失败: {e}")
 
 def get_api_key():
-    """从环境变量中获取Google API密钥。"""
-    try:
-        return get_google_api_key()
-    except ValueError as e:
-        print(f"错误: {e}")
-        raise ValueError("API Key not set")
+    """获取Google API密钥"""
+    # 首先尝试从环境变量获取
+    api_key = os.getenv("GOOGLE_API_KEY")
+    
+    # 如果环境变量中没有，使用默认值
+    if not api_key:
+        api_key = "AIzaSyD-mbv6XXPnxuwIuanGrpjNMJ55gQbzoCw"
+        print("使用默认API密钥")
+    else:
+        print("使用环境变量中的API密钥")
+    
+    return api_key
 
 def initialize_ai():
     """初始化AI模型"""
@@ -40,8 +45,13 @@ def initialize_ai():
         return None
 
 # 在应用启动时加载数据和初始化AI
-load_dialogue_data()
-model = initialize_ai()
+try:
+    load_dialogue_data()
+    model = initialize_ai()
+    print("应用初始化成功")
+except Exception as e:
+    print(f"应用初始化失败: {e}")
+    model = None
 
 def build_client_prompt(counselor_message, client_goal, client_examples=None):
     """为AI构建扮演咨询者的提示词。"""
@@ -116,54 +126,60 @@ def get_next_node_id(node):
 @app.route('/')
 def index():
     """渲染主页面"""
-    return render_template('index.html')
+    try:
+        return render_template('index.html')
+    except Exception as e:
+        return f"模板渲染错误: {e}", 500
 
 @app.route('/start', methods=['POST'])
 def start_dialogue():
     """开始对话，返回第一个节点的信息"""
     global current_node_id, last_counselor_message
-    current_node_id = "M1-01"
-    node = dialogue_data.get(current_node_id)
-    
-    if not node:
-        return jsonify({"error": "Start node M1-01 not found."}), 500
+    try:
+        current_node_id = "M1-01"
+        node = dialogue_data.get(current_node_id)
+        
+        if not node:
+            return jsonify({"error": "Start node M1-01 not found."}), 500
 
-    # 第一个节点是咨询师，直接给出开场白和选项
-    last_counselor_message = node.get('examples', ["你好，请坐。需要什么帮助吗？"])[0]
-    
-    # 移动到下一个节点，让AI扮演咨询者
-    current_node_id = get_next_node_id(node)
-    next_node = dialogue_data.get(current_node_id)
+        # 第一个节点是咨询师，直接给出开场白和选项
+        last_counselor_message = node.get('examples', ["你好，请坐。需要什么帮助吗？"])[0]
+        
+        # 移动到下一个节点，让AI扮演咨询者
+        current_node_id = get_next_node_id(node)
+        next_node = dialogue_data.get(current_node_id)
 
-    if not next_node:
-         return jsonify({
+        if not next_node:
+             return jsonify({
+                "speaker": "咨询师",
+                "dialogue": last_counselor_message,
+                "node_info": { "id": "END", "goal": "对话结束" }
+            })
+
+        return jsonify({
             "speaker": "咨询师",
             "dialogue": last_counselor_message,
-            "node_info": { "id": "END", "goal": "对话结束" }
+            "node_info": {
+                "id": current_node_id,
+                "goal": next_node.get('goal')
+            }
         })
-
-    return jsonify({
-        "speaker": "咨询师",
-        "dialogue": last_counselor_message,
-        "node_info": {
-            "id": current_node_id,
-            "goal": next_node.get('goal')
-        }
-    })
+    except Exception as e:
+        return jsonify({"error": f"启动对话失败: {e}"}), 500
 
 @app.route('/generate_client_response', methods=['POST'])
 def generate_client_response():
     """根据咨询师的话，生成咨询者的回复"""
     global current_node_id
-    if not model:
-        return jsonify({"error": "AI model not initialized"}), 500
-
-    node = dialogue_data.get(current_node_id)
-    if not node:
-        return jsonify({"error": "Invalid node ID"}), 400
-
-    prompt = build_client_prompt(last_counselor_message, node.get('goal'), node.get('examples', []))
     try:
+        if not model:
+            return jsonify({"error": "AI model not initialized"}), 500
+
+        node = dialogue_data.get(current_node_id)
+        if not node:
+            return jsonify({"error": "Invalid node ID"}), 400
+
+        prompt = build_client_prompt(last_counselor_message, node.get('goal'), node.get('examples', []))
         response = model.generate_content(prompt)
         ai_response = response.text.strip()
         
@@ -188,56 +204,57 @@ def counselor_turn():
     """处理咨询师的选择，并推进到下一个节点"""
     global current_node_id, last_counselor_message
     
-    data = request.json
-    selected_option = data.get('dialogue')
-    
-    if not selected_option:
-        return jsonify({"error": "No dialogue provided"}), 400
+    try:
+        data = request.json
+        selected_option = data.get('dialogue')
         
-    last_counselor_message = selected_option
-    
-    # 推进节点
-    node = dialogue_data.get(current_node_id)
-    current_node_id = get_next_node_id(node)
-    next_node = dialogue_data.get(current_node_id)
+        if not selected_option:
+            return jsonify({"error": "No dialogue provided"}), 400
+            
+        last_counselor_message = selected_option
+        
+        # 推进节点
+        node = dialogue_data.get(current_node_id)
+        current_node_id = get_next_node_id(node)
+        next_node = dialogue_data.get(current_node_id)
 
-    return jsonify({
-        "speaker": "咨询师",
-        "dialogue": last_counselor_message,
-        "node_info": {
-            "id": current_node_id,
-            "goal": next_node.get('goal') if next_node else "对话结束"
-        }
-    })
+        return jsonify({
+            "speaker": "咨询师",
+            "dialogue": last_counselor_message,
+            "node_info": {
+                "id": current_node_id,
+                "goal": next_node.get('goal') if next_node else "对话结束"
+            }
+        })
+    except Exception as e:
+        return jsonify({"error": f"咨询师回合失败: {e}"}), 500
 
 @app.route('/ask_client_custom_question', methods=['POST'])
 def ask_client_custom_question():
     """处理用户向咨询者（AI）提出的自定义问题，并返回原始选项。"""
-    if not model:
-        return jsonify({"error": "AI model not initialized"}), 500
-
-    data = request.json
-    question = data.get('question')
-    
-    if not question:
-        return jsonify({"error": "No question provided"}), 400
-
-    # 获取当前节点，以便后续恢复选项
-    current_node = dialogue_data.get(current_node_id)
-    if not current_node:
-        return jsonify({"error": "Invalid current node ID"}), 400
-
-    # 构建对话历史，给AI更多上下文
-    dialogue_history = f"咨询师：{last_counselor_message}"
-    
-    # 使用为李森定制的Prompt函数
-    prompt = build_client_custom_response_prompt(question, dialogue_history)
-    
     try:
+        if not model:
+            return jsonify({"error": "AI model not initialized"}), 500
+
+        data = request.json
+        question = data.get('question')
+        
+        if not question:
+            return jsonify({"error": "No question provided"}), 400
+
+        # 获取当前节点，以便后续恢复选项
+        current_node = dialogue_data.get(current_node_id)
+        if not current_node:
+            return jsonify({"error": "Invalid current node ID"}), 400
+
+        # 构建对话历史，给AI更多上下文
+        dialogue_history = f"咨询师：{last_counselor_message}"
+        
+        # 使用为李森定制的Prompt函数
+        prompt = build_client_custom_response_prompt(question, dialogue_history)
+        
         response = model.generate_content(prompt)
         ai_answer = response.text.strip()
-        
-        # 关键：不改变 current_node_id，对话流停在原地
         
         return jsonify({
             "speaker": "咨询者", 
@@ -251,6 +268,9 @@ def ask_client_custom_question():
 # Vercel WSGI适配器
 def handler(request):
     return app(request.environ, lambda *args: None)
+
+# 导出handler函数供Vercel使用
+__all__ = ['handler']
 
 if __name__ == '__main__':
     # 获取端口号，支持环境变量设置
