@@ -248,7 +248,7 @@ def ask_client_custom_question():
     except Exception as e:
         return jsonify({"error": f"API call failed: {e}"}), 500
 
-# Vercel需要这个函数作为入口点
+# Vercel WSGI适配器
 def handler(request):
     return app(request.environ, lambda *args: None)
 
