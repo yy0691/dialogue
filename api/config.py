@@ -4,13 +4,16 @@ from dotenv import load_dotenv
 # 加载.env文件中的环境变量
 load_dotenv()
 
-# 直接设置API密钥到环境变量
-GOOGLE_API_KEY = "AIzaSyD-mbv6XXPnxuwIuanGrpjNMJ55gQbzoCw"
-os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
-
 def get_google_api_key():
     """获取Google API密钥"""
+    # 首先尝试从环境变量获取
     api_key = os.getenv("GOOGLE_API_KEY")
+    
+    # 如果环境变量中没有，使用默认值
     if not api_key:
-        raise ValueError("环境变量 GOOGLE_API_KEY 未设置。请在.env文件中设置或直接设置环境变量。")
+        api_key = "AIzaSyD-mbv6XXPnxuwIuanGrpjNMJ55gQbzoCw"
+        print("使用默认API密钥")
+    else:
+        print("使用环境变量中的API密钥")
+    
     return api_key
