@@ -113,7 +113,7 @@ if __name__ == "__main__":
                              "  json2csv: Converts your JSON file to a CSV file.")
     
     parser.add_argument('input_file', help="Path to the source file for conversion.")
-    parser.add_argument('output_file', help="Path to the destination file.")
+    parser.add_argument('output1_file', help="Path to the destination file.")
 
     args = parser.parse_args()
 
