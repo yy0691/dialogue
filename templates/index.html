@@ -17,22 +17,106 @@
                 <a href="#" class="nav-item" data-node="M4-01">分子诊断确诊</a>
             </nav>
         </aside>
-        <div class="container">
-            <header class="header">
-                <div id="chapter-name" class="chapter-title">对话模拟</div>
-                <div class="header-placeholder"></div>
-            </header>
+        <div class="main-container">
+            <div class="left-panel">
+                <header class="header">
+                    <div id="chapter-name" class="chapter-title">对话模拟</div>
+                    <div class="header-actions">
+                        <select id="stage-selector" class="stage-selector">
+                            <option value="M1-01">初诊阶段</option>
+                            <option value="M2-01">先证者症状</option>
+                            <option value="M3-01">初步诊断</option>
+                            <option value="M4-01">分子诊断确诊</option>
+                        </select>
+                        <button id="api-config-btn" class="header-btn">API配置</button>
+                        <button id="sessions-btn" class="header-btn">会话管理</button>
+                        <div id="session-info" class="session-info" style="display: none;">
+                            <span id="session-id-display"></span>
+                        </div>
+                    </div>
+                </header>
 
-            <main class="main-content">
-                <div class="dialogue-history" id="dialogue-history">
-                    <!-- 对话内容会动态插入这里 -->
-                </div>
+                <main class="main-content">
+                    <div class="dialogue-history" id="dialogue-history">
+                        <!-- 对话内容会动态插入这里 -->
+                    </div>
 
-                <div class="options-container" id="options-container">
-                    <div class="system-prompt" id="system-prompt">请选择和李森的对话内容。</div>
-                    <!-- 选项会动态插入这里 -->
+                    <div class="options-container" id="options-container">
+                        <div class="system-prompt" id="system-prompt">请选择和李森的对话内容。</div>
+                        <!-- 选项会动态插入这里 -->
+                    </div>
+
+                    <div class="input-container" id="input-container" style="display: none;">
+                        <textarea id="custom-input" placeholder="输入您想对咨询者说的话..."></textarea>
+                        <button id="send-btn">发送</button>
+                    </div>
+                </main>
+            </div>
+            
+            <!-- 右侧AI指导建议面板 -->
+            <div class="right-panel">
+                <div class="system-feedback-container" id="system-feedback-container">
+                    <div class="system-feedback-header">
+                        <span class="feedback-icon">💡</span>
+                        <span class="feedback-title">AI 指导建议</span>
+                        <button class="feedback-close-btn" id="feedback-close-btn">×</button>
+                    </div>
+                    <div class="system-feedback-content">
+                        <div class="feedback-section">
+                            <div class="feedback-label">意图识别:</div>
+                            <div class="feedback-intent" id="feedback-intent">等待分析...</div>
+                        </div>
+                        <div class="feedback-section">
+                            <div class="feedback-label">反馈分析:</div>
+                            <div class="feedback-text" id="feedback-text">请先进行对话，系统将为您提供实时的指导建议。</div>
+                        </div>
+                        <div class="feedback-section">
+                            <div class="feedback-label">操作建议:</div>
+                            <div class="feedback-suggestion" id="feedback-suggestion">根据咨询者的回复，选择合适的后续问题。</div>
+                        </div>
+                    </div>
                 </div>
-            </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- API配置模态框 -->
+    <div id="api-config-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>API密钥配置</h3>
+                <button id="api-modal-close" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="api-config-section">
+                    <label for="current-api-key">当前API密钥:</label>
+                    <div class="api-key-display">
+                        <span id="current-api-display">未设置</span>
+                        <span id="api-status" class="api-status"></span>
+                    </div>
+                </div>
+                
+                <div class="api-config-section">
+                    <label for="new-api-key">新API密钥:</label>
+                    <input type="password" id="new-api-key" class="api-input" placeholder="输入Google Gemini API密钥">
+                    <button id="toggle-api-visibility" class="toggle-btn">👁️</button>
+                </div>
+                
+                <div class="api-config-section">
+                    <label>预设API密钥:</label>
+                    <div id="preset-api-keys" class="preset-keys">
+                        <!-- 预设的API密钥会动态添加到这里 -->
+                    </div>
+                    <button id="add-preset-key" class="add-btn">+ 添加到预设</button>
+                </div>
+                
+                <div class="modal-actions">
+                    <button id="test-api-key" class="test-btn">测试连接</button>
+                    <button id="save-api-key" class="save-btn">保存并使用</button>
+                </div>
+                
+                <div id="api-test-result" class="test-result" style="display: none;"></div>
+            </div>
         </div>
     </div>
 

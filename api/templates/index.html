@@ -11,24 +11,199 @@
         <header class="header">
             <button id="back-btn" class="header-btn">返回</button>
             <div id="chapter-name" class="chapter-title">对话模拟</div>
-            <div class="header-placeholder"></div>
+            <div class="header-actions">
+                <select id="stage-selector" class="stage-selector">
+                    <option value="M1-01">初诊阶段</option>
+                    <option value="M2-01">先证者症状</option>
+                    <option value="M3-01">初步诊断</option>
+                    <option value="M4-01">分子诊断确诊</option>
+                </select>
+                <button id="api-config-btn" class="header-btn">API配置</button>
+                <button id="sessions-btn" class="header-btn">会话管理</button>
+                <div id="session-info" class="session-info" style="display: none;">
+                    <span id="session-id-display"></span>
+                </div>
+            </div>
         </header>
 
         <main class="main-content">
-            <div class="dialogue-history" id="dialogue-history">
-                <!-- 对话内容会动态插入这里 -->
-            </div>
+            <!-- 左侧对话区域 -->
+            <div class="dialogue-panel">
+                <div class="dialogue-history" id="dialogue-history">
+                    <!-- 对话内容会动态插入这里 -->
+                </div>
 
-            <div class="options-container" id="options-container">
-                 <div class="system-prompt" id="system-prompt">请选择和李森的对话内容。</div>
-                <!-- 选项会动态插入这里 -->
-            </div>
+                <div class="options-container" id="options-container">
+                     <div class="system-prompt" id="system-prompt">请选择和李森的对话内容。</div>
+                    <!-- 选项会动态插入这里 -->
+                </div>
 
-            <div class="input-container" id="input-container" style="display: none;">
-                <textarea id="custom-input" placeholder="输入您想对咨询者说的话..."></textarea>
-                <button id="send-btn">发送</button>
+                <div class="input-container" id="input-container" style="display: none;">
+                    <textarea id="custom-input" placeholder="输入您想对咨询者说的话..."></textarea>
+                    <button id="send-btn">发送</button>
+                </div>
             </div>
         </main>
+    </div>
+
+    
+        <!-- 右侧系统指导反馈区域 -->
+        <div class="feedback-panel" style="height: 960px; width: 400px; overflow-y: auto;">
+            <div class="system-feedback-container" id="system-feedback-container">
+                <div class="system-feedback-header">
+                    <span class="feedback-icon">💡</span>
+                    <span class="feedback-title">AI 指导建议</span>
+                    <button class="feedback-toggle-btn" id="feedback-toggle-btn">📌</button>
+                </div>
+                <div class="system-feedback-content" id="system-feedback-content">
+                    <div class="feedback-placeholder">
+                        <div class="placeholder-icon">🤖</div>
+                        <div class="placeholder-text">
+                            <h3>智能指导助手</h3>
+                            <p>当您提出自定义问题时，AI将为您提供：</p>
+                            <ul>
+                                <li>📊 意图识别分析</li>
+                                <li>💬 对话效果评估</li>
+                                <li>🎯 后续策略建议</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="feedback-sections" style="display: none;">
+                        <div class="feedback-section">
+                            <div class="feedback-label">意图识别:</div>
+                            <div class="feedback-intent" id="feedback-intent"></div>
+                        </div>
+                        <div class="feedback-section">
+                            <div class="feedback-label">反馈分析:</div>
+                            <div class="feedback-text" id="feedback-text"></div>
+                        </div>
+                        <div class="feedback-section">
+                            <div class="feedback-label">操作建议:</div>
+                            <div class="feedback-suggestion" id="feedback-suggestion"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <!-- API配置模态框 -->
+    <div id="api-config-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>API密钥配置</h3>
+                <button id="api-modal-close" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- API提供商选择 -->
+                <div class="api-config-section">
+                    <label for="api-provider-select">API提供商:</label>
+                    <select id="api-provider-select" class="api-select">
+                        <option value="gemini">Google Gemini</option>
+                        <option value="siliconflow">硅基流动</option>
+                        <option value="custom">自定义供应商</option>
+                    </select>
+                </div>
+
+                <div class="api-config-section">
+                    <label for="current-api-key">当前API配置:</label>
+                    <div class="api-key-display">
+                        <span id="current-api-display">未设置</span>
+                        <span id="api-status" class="api-status"></span>
+                    </div>
+                </div>
+                
+                <!-- Gemini配置 -->
+                <div id="gemini-config" class="provider-config">
+                    <div class="api-config-section">
+                        <label for="gemini-api-key">Gemini API密钥:</label>
+                        <input type="password" id="gemini-api-key" class="api-input" placeholder="输入Google Gemini API密钥">
+                        <button id="toggle-gemini-visibility" class="toggle-btn">👁️</button>
+                    </div>
+                </div>
+
+                <!-- 硅基流动配置 -->
+                <div id="siliconflow-config" class="provider-config" style="display: none;">
+                    <div class="api-config-section">
+                        <label for="siliconflow-api-key">硅基流动 API密钥:</label>
+                        <input type="password" id="siliconflow-api-key" class="api-input" placeholder="输入硅基流动 API密钥">
+                        <button id="toggle-siliconflow-visibility" class="toggle-btn">👁️</button>
+                    </div>
+                    
+                    <div class="api-config-section">
+                        <label for="siliconflow-url">API地址 (可选):</label>
+                        <input type="text" id="siliconflow-url" class="api-input" placeholder="https://api.siliconflow.cn/v1" value="https://api.siliconflow.cn/v1">
+                    </div>
+                    
+                    <div class="api-config-section">
+                        <label for="siliconflow-model">模型名称:</label>
+                        <select id="siliconflow-model" class="api-select">
+                            <option value="qwen/Qwen2.5-7B-Instruct">通义千问 Qwen2.5-7B-Instruct</option>
+                            <option value="qwen/Qwen2.5-14B-Instruct">通义千问 Qwen2.5-14B-Instruct</option>
+                            <option value="qwen/Qwen2.5-32B-Instruct">通义千问 Qwen2.5-32B-Instruct</option>
+                            <option value="qwen/Qwen2.5-72B-Instruct">通义千问 Qwen2.5-72B-Instruct</option>
+                            <option value="deepseek-ai/DeepSeek-V2.5">DeepSeek-V2.5</option>
+                            <option value="meta-llama/Meta-Llama-3.1-8B-Instruct">Llama-3.1-8B-Instruct</option>
+                            <option value="meta-llama/Meta-Llama-3.1-70B-Instruct">Llama-3.1-70B-Instruct</option>
+                        </select>
+                        <input type="text" id="siliconflow-custom-model" class="api-input" placeholder="或输入自定义模型名称" style="margin-top: 5px;">
+                    </div>
+                </div>
+
+                <!-- 自定义供应商配置 -->
+                <div id="custom-config" class="provider-config" style="display: none;">
+                    <div class="api-config-section">
+                        <label for="custom-api-key">API密钥:</label>
+                        <input type="password" id="custom-api-key" class="api-input" placeholder="输入API密钥">
+                        <button id="toggle-custom-visibility" class="toggle-btn">👁️</button>
+                    </div>
+                    
+                    <div class="api-config-section">
+                        <label for="custom-url">API地址:</label>
+                        <input type="text" id="custom-url" class="api-input" placeholder="https://api.openai.com/v1" value="https://api.openai.com/v1">
+                        <small style="color: #666; font-size: 12px;">
+                            请输入完整的API基础地址，例如:<br>
+                            • OpenAI: https://api.openai.com/v1<br>
+                            • Azure OpenAI: https://your-resource.openai.azure.com/openai/deployments/your-deployment<br>
+                            • 本地服务: http://localhost:8000/v1<br>
+                            <strong>注意：地址应该以 /v1 结尾（对于标准OpenAI格式）</strong>
+                        </small>
+                    </div>
+                    
+                    <div class="api-config-section">
+                        <label for="custom-model">模型名称:</label>
+                        <select id="custom-model" class="api-select">
+                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                            <option value="gpt-4">GPT-4</option>
+                            <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                            <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                            <option value="claude-3-opus">Claude 3 Opus</option>
+                            <option value="custom">自定义模型</option>
+                        </select>
+                        <input type="text" id="custom-model-name" class="api-input" placeholder="输入自定义模型名称" style="margin-top: 5px; display: none;">
+                    </div>
+                    
+                    <div class="api-config-section">
+                        <label for="custom-provider-name">供应商名称 (可选):</label>
+                        <input type="text" id="custom-provider-name" class="api-input" placeholder="例如: OpenAI, Anthropic, 自建服务等">
+                    </div>
+                </div>
+                
+                <div class="api-config-section">
+                    <label>预设API配置:</label>
+                    <div id="preset-api-keys" class="preset-keys">
+                        <!-- 预设的API配置会动态添加到这里 -->
+                    </div>
+                    <button id="add-preset-key" class="add-btn">+ 添加到预设</button>
+                </div>
+                
+                <div class="modal-actions">
+                    <button id="test-api-key" class="test-btn">测试连接</button>
+                    <button id="save-api-key" class="save-btn">保存并使用</button>
+                </div>
+                
+                <div id="api-test-result" class="test-result" style="display: none;"></div>
+            </div>
+        </div>
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>

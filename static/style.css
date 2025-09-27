@@ -64,16 +64,31 @@ body {
     color: white;
 }
 
-.container {
+.main-container {
+    display: flex;
     width: 100%;
-    max-width: 800px;
     height: 95vh;
     max-height: 900px;
+    gap: 20px;
+}
+
+.left-panel {
+    flex: 1;
+    min-width: 600px;
     background-color: #ffffff;
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+}
+
+.right-panel {
+    width: 350px;
+    flex-shrink: 0;
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     overflow: hidden;
 }
 
@@ -238,4 +253,440 @@ body {
     padding: 20px;
     font-style: italic;
     color: #65676b;
+}
+
+#send-custom-btn:hover {
+    background-color: #0056b3;
+}
+
+.loading-indicator {
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+    color: #65676b;
+}
+
+/* 头部操作区域样式 */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.header-btn {
+    background-color: #e4e6eb;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.header-btn:hover {
+    background-color: #d8dbdf;
+}
+
+.stage-selector {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.stage-selector:hover {
+    border-color: #007bff;
+}
+
+.stage-selector:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.session-info {
+    font-size: 12px;
+    color: #7f8c8d;
+    background-color: #f8f9fa;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+/* 系统反馈样式 - 右侧面板版本 */
+.right-panel .system-feedback-container {
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.system-feedback-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.feedback-icon {
+    font-size: 20px;
+    margin-right: 8px;
+}
+
+.feedback-title {
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+    flex-grow: 1;
+}
+
+.feedback-close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    display: none; /* 在右侧面板中隐藏关闭按钮 */
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.feedback-close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.right-panel .system-feedback-content {
+    padding: 20px;
+    background: white;
+    flex: 1;
+    overflow-y: auto;
+    border-radius: 0 0 16px 16px;
+}
+
+/* 为右侧面板的反馈内容添加更好的滚动样式 */
+.right-panel .system-feedback-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.right-panel .system-feedback-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.right-panel .system-feedback-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.right-panel .system-feedback-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+.feedback-section {
+    margin-bottom: 16px;
+}
+
+.feedback-section:last-child {
+    margin-bottom: 0;
+}
+
+.feedback-label {
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.feedback-intent {
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+    display: inline-block;
+    margin-bottom: 8px;
+}
+
+.feedback-intent.intent-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.feedback-intent.intent-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.feedback-intent.intent-danger {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.feedback-intent.intent-info {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.feedback-text, .feedback-suggestion {
+    color: #555;
+    line-height: 1.6;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+/* 右侧面板中的反馈文本样式优化 */
+.right-panel .feedback-text, 
+.right-panel .feedback-suggestion {
+    max-height: none;
+    overflow: visible;
+}
+
+/* API配置模态框样式 */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    color: #333;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.api-config-section {
+    margin-bottom: 20px;
+}
+
+.api-config-section label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+.api-key-display {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 14px;
+}
+
+.api-input {
+    width: calc(100% - 50px);
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: monospace;
+}
+
+.toggle-btn {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #ddd;
+    background: #f8f9fa;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-left: 8px;
+}
+
+.toggle-btn:hover {
+    background: #e9ecef;
+}
+
+.preset-keys {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px;
+    min-height: 60px;
+    margin-bottom: 10px;
+    background: #f8f9fa;
+}
+
+.preset-key-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    margin: 4px 0;
+    background: white;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.preset-key-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.preset-key-actions button {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.use-key-btn {
+    background: #007bff;
+    color: white;
+}
+
+.delete-key-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.add-btn {
+    width: 100%;
+    padding: 10px;
+    border: 1px dashed #007bff;
+    background: none;
+    color: #007bff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.add-btn:hover {
+    background: #f0f8ff;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.test-btn {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #007bff;
+    background: none;
+    color: #007bff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.test-btn:hover {
+    background: #f0f8ff;
+}
+
+.save-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    background: #007bff;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.save-btn:hover {
+    background: #0056b3;
+}
+
+.test-result {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.test-result.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.test-result.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.api-status {
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+.api-status.active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.api-status.inactive {
+    background: #f8d7da;
+    color: #721c24;
 }

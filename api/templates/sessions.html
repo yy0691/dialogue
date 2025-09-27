@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>对话会话管理 - SBMA 遗传咨询 AI 对话仿真系统</title>
+    <link rel="stylesheet" href="../static/style.css">
+    <style>
+        .sessions-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .sessions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .sessions-title {
+            font-size: 2em;
+            color: #2c3e50;
+            margin: 0;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-success {
+            background-color: #27ae60;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #229954;
+        }
+        
+        .sessions-list {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .session-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .session-card:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+        
+        .session-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .session-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .session-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .session-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-label {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 1em;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        
+        .session-preview {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .preview-title {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+        }
+        
+        .preview-content {
+            font-size: 0.9em;
+            color: #2c3e50;
+            line-height: 1.4;
+        }
+        
+        .no-sessions {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="sessions-container">
+        <div class="sessions-header">
+            <h1 class="sessions-title">对话会话管理</h1>
+            <div>
+                <button class="btn btn-primary" onclick="refreshSessions()">刷新</button>
+                <button class="btn btn-success" onclick="createNewSession()">新建会话</button>
+                <button class="btn btn-primary" onclick="goToMain()">返回主界面</button>
+            </div>
+        </div>
+        
+        <div id="sessions-content">
+            <div class="loading">正在加载会话列表...</div>
+        </div>
+    </div>
+
+    <script>
+        let sessions = [];
+        
+        // 页面加载时获取会话列表
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSessions();
+        });
+        
+        async function loadSessions() {
+            try {
+                const response = await fetch('/api/sessions');
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                
+                sessions = data.sessions;
+                displaySessions();
+            } catch (error) {
+                showError('加载会话列表失败: ' + error.message);
+            }
+        }
+        
+        function displaySessions() {
+            const content = document.getElementById('sessions-content');
+            
+            if (sessions.length === 0) {
+                content.innerHTML = `
+                    <div class="no-sessions">
+                        <h3>暂无对话会话</h3>
+                        <p>您还没有创建任何对话会话</p>
+                        <button class="btn btn-success" onclick="createNewSession()">创建第一个会话</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            const sessionsHTML = sessions.map(session => `
+                <div class="session-card">
+                    <div class="session-header">
+                        <div class="session-title">${session.user_name} - ${session.stage}</div>
+                        <div class="session-actions">
+                            <button class="btn btn-primary" onclick="resumeSession('${session.session_id}')">继续对话</button>
+                            <button class="btn btn-success" onclick="exportSession('${session.session_id}')">导出</button>
+                            <button class="btn btn-danger" onclick="deleteSession('${session.session_id}')">删除</button>
+                        </div>
+                    </div>
+                    
+                    <div class="session-info">
+                        <div class="info-item">
+                            <div class="info-label">会话ID</div>
+                            <div class="info-value">${session.session_id.substring(0, 8)}...</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">创建时间</div>
+                            <div class="info-value">${formatDateTime(session.created_at)}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">最后更新</div>
+                            <div class="info-value">${formatDateTime(session.last_updated)}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">对话轮数</div>
+                            <div class="info-value">${session.history_count} 轮</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            content.innerHTML = `<div class="sessions-list">${sessionsHTML}</div>`;
+        }
+        
+        async function resumeSession(sessionId) {
+            try {
+                // 跳转到主界面并加载指定会话
+                window.location.href = `/?session_id=${sessionId}`;
+            } catch (error) {
+                showError('恢复会话失败: ' + error.message);
+            }
+        }
+        
+        async function deleteSession(sessionId) {
+            if (!confirm('确定要删除这个会话吗？此操作不可撤销。')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/sessions/${sessionId}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                
+                alert('会话已删除');
+                loadSessions(); // 重新加载列表
+            } catch (error) {
+                showError('删除会话失败: ' + error.message);
+            }
+        }
+        
+        async function exportSession(sessionId) {
+            try {
+                const response = await fetch(`/api/sessions/${sessionId}/export`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                
+                alert('会话已导出到: ' + data.export_file);
+            } catch (error) {
+                showError('导出会话失败: ' + error.message);
+            }
+        }
+        
+        async function createNewSession() {
+            try {
+                const response = await fetch('/api/sessions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_name: '用户',
+                        stage: 'M1'
+                    })
+                });
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                
+                // 跳转到主界面并开始新会话
+                window.location.href = `/?session_id=${data.session_id}`;
+            } catch (error) {
+                showError('创建会话失败: ' + error.message);
+            }
+        }
+        
+        function refreshSessions() {
+            loadSessions();
+        }
+        
+        function goToMain() {
+            window.location.href = '/';
+        }
+        
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('zh-CN');
+        }
+        
+        function showError(message) {
+            const content = document.getElementById('sessions-content');
+            content.innerHTML = `<div class="error">${message}</div>`;
+        }
+    </script>
+</body>
+</html>
