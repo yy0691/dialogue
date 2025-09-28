@@ -23,7 +23,7 @@ def get_gemini_client():
             return None
             
         genai.configure(api_key=api_key)
-        return genai.GenerativeModel('gemini-1.5-flash')
+        return genai.GenerativeModel('gemini-2.0-flash')
     except Exception as e:
         print(f"Gemini客户端初始化失败: {e}")
         return None
