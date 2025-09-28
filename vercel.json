@@ -3,11 +3,7 @@
   "builds": [
     {
       "src": "api/index.py",
-      "use": "@vercel/python",
-      "config": { 
-        "maxLambdaSize": "50mb",
-        "runtime": "python3.9"
-      }
+      "use": "@vercel/python"
     }
   ],
   "routes": [
@@ -17,7 +13,7 @@
     }
   ],
   "env": {
-    "FLASK_SECRET_KEY": "dialogue_app_secret_key_2024_beijing_university_ai_demo",
+    "FLASK_SECRET_KEY": "dialogue_app_secret_key_2024",
     "GOOGLE_API_KEY": "AIzaSyD-mbv6XXPnxuwIuanGrpjNMJ55gQbzoCw"
   }
 }
