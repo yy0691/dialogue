@@ -99,29 +99,59 @@ def load_dialogue_data():
         print(f"加载对话数据失败: {e}")
         dialogue_data = {}
 
-def get_api_key():
-    """获取API密钥"""
-    # 优先从环境变量获取
-    api_key = os.environ.get('GOOGLE_API_KEY')
-    if api_key:
-        return api_key
+def get_api_key(fallback_to_default=True):
+    """获取API密钥，支持回退到预置密钥"""
+    # 1. 优先使用用户在会话中设置的API密钥
+    try:
+        if 'api_key' in session and session['api_key']:
+            return session['api_key']
+    except:
+        pass
     
-    # 如果环境变量没有，尝试从config获取
+    # 2. 从环境变量获取用户设置的密钥
+    user_api_key = os.environ.get('USER_GOOGLE_API_KEY')
+    if user_api_key:
+        return user_api_key
+    
+    # 3. 如果允许回退，使用预置的默认密钥
+    if fallback_to_default:
+        default_key = os.environ.get('GOOGLE_API_KEY', 'AIzaSyD-mbv6XXPnxuwIuanGrpjNMJ55gQbzoCw')
+        return default_key
+    
+    # 4. 尝试从config获取
     try:
         from config import get_google_api_key
         return get_google_api_key()
     except:
-        # 最后使用硬编码的密钥（仅用于测试）
-        return "AIzaSyD-mbv6XXPnxuwIuanGrpjNMJ55gQbzoCw"
+        pass
+    
+    return None
 
 def get_model_for_session():
-    """获取当前会话的模型"""
+    """获取当前会话的模型，支持智能回退"""
+    # 1. 尝试使用用户自定义的API密钥
     try:
-        api_key = get_api_key()
-        if api_key:
-            return APIClient(provider="gemini", api_key=api_key)
+        user_api_key = get_api_key(fallback_to_default=False)
+        if user_api_key:
+            client = APIClient(provider="gemini", api_key=user_api_key)
+            print("使用用户自定义API密钥")
+            return client
     except Exception as e:
-        print(f"获取模型失败: {e}")
+        print(f"用户API密钥失败: {e}")
+    
+    # 2. 回退到预置的默认API密钥
+    try:
+        default_api_key = get_api_key(fallback_to_default=True)
+        if default_api_key:
+            client = APIClient(provider="gemini", api_key=default_api_key)
+            print("使用预置默认API密钥")
+            return client
+    except Exception as e:
+        print(f"默认API密钥也失败: {e}")
+        # 如果是配额问题，记录但不抛出异常
+        if "quota" in str(e).lower() or "limit" in str(e).lower():
+            print("默认API配额已用完，需要用户设置自己的密钥")
+    
     return None
 
 @app.route('/')
@@ -171,7 +201,10 @@ def generate_client_response():
     try:
         model = get_model_for_session()
         if not model:
-            return jsonify({"error": "AI模型未初始化"}), 500
+            return jsonify({
+                "error": "AI模型未初始化，请检查API密钥配置",
+                "need_api_key": True
+            }), 500
         
         active_stage = session.get('active_stage', 'M1')
         if 'dialogue_states' not in session or active_stage not in session['dialogue_states']:
@@ -204,8 +237,26 @@ def generate_client_response():
         })
         
     except Exception as e:
-        print(f"生成回复失败: {e}")
-        return jsonify({"error": f"生成回复失败: {str(e)}"}), 500
+        error_msg = str(e)
+        print(f"生成回复失败: {error_msg}")
+        
+        # 智能错误处理
+        if "quota" in error_msg.lower() or "limit" in error_msg.lower():
+            return jsonify({
+                "error": "API配额已用完，请设置您自己的Google API密钥",
+                "quota_exceeded": True,
+                "need_api_key": True
+            }), 500
+        elif "unauthorized" in error_msg.lower() or "401" in error_msg:
+            return jsonify({
+                "error": "API密钥无效，请检查密钥配置",
+                "need_api_key": True
+            }), 500
+        else:
+            return jsonify({
+                "error": f"生成回复失败: {error_msg}",
+                "need_api_key": False
+            }), 500
 
 @app.route('/counselor_turn', methods=['POST'])
 def counselor_turn():
@@ -241,6 +292,61 @@ def counselor_turn():
         print(f"处理咨询师回合失败: {e}")
         return jsonify({"error": f"处理失败: {str(e)}"}), 500
 
+@app.route('/get_api_providers', methods=['GET'])
+def get_api_providers():
+    """获取所有可用的API提供商"""
+    try:
+        providers = {
+            "gemini": {
+                "name": "Google Gemini",
+                "default_model": "gemini-1.5-flash",
+                "description": "Google的生成式AI模型"
+            }
+        }
+        
+        # 检查是否有预置的API密钥
+        has_default_key = bool(get_api_key(fallback_to_default=True))
+        current_provider = session.get('api_provider', 'gemini')
+        
+        return jsonify({
+            "success": True,
+            "providers": providers,
+            "current_provider": current_provider,
+            "has_default_key": has_default_key
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"获取提供商信息失败: {str(e)}"
+        })
+
+@app.route('/set_api_key', methods=['POST'])
+def set_api_key():
+    """设置当前会话的API密钥和提供商"""
+    try:
+        data = request.json or {}
+        api_key = data.get('api_key', '').strip()
+        provider = data.get('provider', 'gemini')
+        
+        if not api_key:
+            return jsonify({"success": False, "message": "API密钥不能为空"}), 400
+        
+        # 将API配置存储在会话中
+        session['api_key'] = api_key
+        session['api_provider'] = provider
+        session.modified = True
+        
+        return jsonify({
+            "success": True, 
+            "message": f"{provider} API配置已设置"
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False, 
+            "message": f"设置失败: {str(e)}"
+        }), 500
+
 @app.route('/test_api_key', methods=['POST'])
 def test_api_key():
     """测试API密钥"""
@@ -249,7 +355,10 @@ def test_api_key():
         api_key = data.get('api_key', '').strip()
         
         if not api_key:
-            return jsonify({"success": False, "message": "API密钥不能为空"}), 400
+            # 如果没有提供密钥，测试默认密钥
+            api_key = get_api_key(fallback_to_default=True)
+            if not api_key:
+                return jsonify({"success": False, "message": "没有可用的API密钥"}), 400
         
         # 创建测试客户端
         test_client = APIClient(provider="gemini", api_key=api_key)
@@ -259,12 +368,25 @@ def test_api_key():
         # 发送测试请求
         response = test_client.generate_content("请回复'测试成功'")
         if response and response.text:
-            return jsonify({"success": True, "message": "API密钥有效，连接成功！"})
+            return jsonify({
+                "success": True, 
+                "message": "API密钥有效，连接成功！",
+                "is_default": api_key == get_api_key(fallback_to_default=True)
+            })
         else:
             return jsonify({"success": False, "message": "API响应为空"})
             
     except Exception as e:
-        return jsonify({"success": False, "message": f"测试失败: {str(e)}"})
+        error_msg = str(e)
+        if "quota" in error_msg.lower() or "limit" in error_msg.lower():
+            # 如果默认密钥超限，提示用户设置自己的密钥
+            return jsonify({
+                "success": False, 
+                "message": "默认API配额已用完，请设置您自己的Google API密钥",
+                "quota_exceeded": True
+            })
+        else:
+            return jsonify({"success": False, "message": f"测试失败: {error_msg}"})
 
 # 健康检查端点
 @app.route('/health')

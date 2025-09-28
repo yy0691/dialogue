@@ -15,5 +15,9 @@
       "src": "/(.*)",
       "dest": "api/index.py"
     }
-  ]
+  ],
+  "env": {
+    "FLASK_SECRET_KEY": "dialogue_app_secret_key_2024_beijing_university_ai_demo",
+    "GOOGLE_API_KEY": "AIzaSyD-mbv6XXPnxuwIuanGrpjNMJ55gQbzoCw"
+  }
 }
